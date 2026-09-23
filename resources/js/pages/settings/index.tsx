@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Settings as SettingsIcon, Building, DollarSign, Users, RefreshCw, Palette, BookOpen, Award, FileText, Mail, Bell, Link2, CreditCard, Calendar, HardDrive, Shield, Bot, Cookie, Search, Webhook, Wallet, Clock, Fingerprint, Network, UserPlus, Briefcase, MailOpen, FileCheck } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import SystemSettings from './components/system-settings';
-import { usePage } from '@inertiajs/react';
+import { usePage, router } from '@inertiajs/react';
 
 import CurrencySettings from './components/currency-settings';
 
@@ -331,6 +331,7 @@ export default function Settings() {
       title={t('Settings')}
       url="/settings"
       description={t('Manage system settings.')}
+      actions={auth.user?.type === 'superadmin' ? [{ label: 'Visibilité des modules', onClick: () => router.visit(route('settings.modules.index')) }] : []}
       breadcrumbs={[
         { title: t('Dashboard'), href: route('dashboard') },
         { title: t('Settings') }

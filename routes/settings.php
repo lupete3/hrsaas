@@ -39,6 +39,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 Route::middleware(['auth', 'verified', 'plan.access'])->group(function () {
+    Route::get('settings/modules', [\App\Http\Controllers\Settings\ModuleVisibilityController::class, 'index'])->name('settings.modules.index');
+    Route::put('settings/modules', [\App\Http\Controllers\Settings\ModuleVisibilityController::class, 'update'])->name('settings.modules.update');
     // Payment Settings (admin only)
     Route::post('/payment-settings', [PaymentSettingController::class, 'store'])->name('payment.settings');
 

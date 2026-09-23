@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useTranslation } from 'react-i18next';
 import { usePage, router, Link } from '@inertiajs/react';
 import { toast } from '@/components/custom-toast';
-import { hasPermission } from '@/utils/authorization';
+import { useModuleVisibility } from '@/hooks/use-module-visibility';
 import UserInitials from '@/components/user-initials';
 
 interface EmployeeDashboardData {
@@ -31,6 +31,7 @@ interface EmployeeDashboardData {
 
 export default function EmployeeDashboard({ dashboardData }: { dashboardData: EmployeeDashboardData }) {
   const { t } = useTranslation();
+  const { isVisible, canShow } = useModuleVisibility();
   const { auth } = usePage().props as any;
   const permissions = auth?.permissions || [];
   const [mounted, setMounted] = useState(false);
@@ -250,7 +251,7 @@ export default function EmployeeDashboard({ dashboardData }: { dashboardData: Em
             <p className="text-slate-400 text-xs mt-1 hidden sm:block group-hover:text-slate-300 transition-colors duration-300">
               {t("Here's your personal overview for today.")}
             </p>
-            <div className="flex items-center gap-3 mt-3">
+            {isVisible('attendance-records') && <div className="flex items-center gap-3 mt-3">
               <div className="flex items-center gap-1.5">
                 <div className="w-2 h-2 bg-emerald-400/70 rounded-full animate-bounce" style={{ animationDelay: '0ms', animationDuration: '1.2s' }} />
                 <div className="w-2 h-2 bg-emerald-300/50 rounded-full animate-bounce" style={{ animationDelay: '150ms', animationDuration: '1.2s' }} />
@@ -259,10 +260,10 @@ export default function EmployeeDashboard({ dashboardData }: { dashboardData: Em
               <span className="text-emerald-400 font-semibold text-sm group-hover:scale-105 transition-transform duration-200">
                 {isClockedIn ? t('Currently clocked in') : clockInTime ? t('Clocked out') : t('Not clocked in yet')}
               </span>
-            </div>
+            </div>}
           </div>
           {/* Shift info pill */}
-          {dashboardData?.employeeShift && (
+          {isVisible('shifts') && dashboardData?.employeeShift && (
             <div className="flex items-center gap-2 shrink-0">
               <div className="rounded-xl bg-white/10 px-4 py-2.5 text-center hover:bg-white/15 hover:scale-105 transition-all duration-300">
                 <p className="text-white text-sm font-bold leading-tight">{dashboardData.employeeShift.name}</p>
@@ -276,7 +277,7 @@ export default function EmployeeDashboard({ dashboardData }: { dashboardData: Em
         <div className={`grid grid-cols-1 gap-3 sm:grid-cols-3 ${fadeUp(100)}`}>
 
           {/* Awards */}
-          <Card className="h-full border border-emerald-200 dark:border-emerald-900/50 shadow-sm bg-emerald-50 dark:bg-emerald-950/30 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+          {isVisible('awards') && <Card className="h-full border border-emerald-200 dark:border-emerald-900/50 shadow-sm bg-emerald-50 dark:bg-emerald-950/30 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
             <CardContent className="relative overflow-hidden p-5">
               <div className="flex items-center gap-3">
                 <div className="rounded-xl bg-emerald-100 dark:bg-emerald-900/60 p-2.5 shrink-0">
@@ -289,10 +290,10 @@ export default function EmployeeDashboard({ dashboardData }: { dashboardData: Em
                 </div>
               </div>
             </CardContent>
-          </Card>
+          </Card>}
 
           {/* Warnings */}
-          <Card className="h-full border border-amber-200 dark:border-amber-900/50 shadow-sm bg-amber-50 dark:bg-amber-950/30 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+          {isVisible('warnings') && <Card className="h-full border border-amber-200 dark:border-amber-900/50 shadow-sm bg-amber-50 dark:bg-amber-950/30 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
             <CardContent className="relative overflow-hidden p-5">
               <div className="flex items-center gap-3">
                 <div className="rounded-xl bg-amber-100 dark:bg-amber-900/50 p-2.5 shrink-0">
@@ -305,10 +306,10 @@ export default function EmployeeDashboard({ dashboardData }: { dashboardData: Em
                 </div>
               </div>
             </CardContent>
-          </Card>
+          </Card>}
 
           {/* Complaints */}
-          <Card className="h-full border border-red-200 dark:border-red-900/50 shadow-sm bg-red-50 dark:bg-red-950/30 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+          {isVisible('complaints') && <Card className="h-full border border-red-200 dark:border-red-900/50 shadow-sm bg-red-50 dark:bg-red-950/30 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
             <CardContent className="relative overflow-hidden p-5">
               <div className="flex items-center gap-3">
                 <div className="rounded-xl bg-red-100 dark:bg-red-900/50 p-2.5 shrink-0">
@@ -321,12 +322,12 @@ export default function EmployeeDashboard({ dashboardData }: { dashboardData: Em
                 </div>
               </div>
             </CardContent>
-          </Card>
+          </Card>}
 
         </div>
 
         {/* ── Attendance Card ── */}
-        {hasPermission(permissions, 'clock-in-out') && (
+        {canShow(permissions, 'clock-in-out') && (
           <div className={fadeUp(200)}>
             <Card className="border border-border shadow-sm dark:bg-slate-900 overflow-hidden">
               <CardHeader className="pb-3 pt-5 px-5 border-b">
@@ -381,14 +382,14 @@ export default function EmployeeDashboard({ dashboardData }: { dashboardData: Em
         <div className={`grid gap-4 lg:grid-cols-2 ${fadeUp(300)}`}>
 
           {/* Recent Announcements */}
-          {hasPermission(permissions, 'view-announcements') && <Card className="border border-blue-100 dark:border-blue-900/40 shadow-sm dark:bg-slate-900 overflow-hidden">
+          {canShow(permissions, 'view-announcements') && <Card className="border border-blue-100 dark:border-blue-900/40 shadow-sm dark:bg-slate-900 overflow-hidden">
             <CardHeader className="pb-3 pt-5 px-5 border-b">
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="text-base font-semibold">{t('Recent Announcements')}</CardTitle>
                   <p className="text-xs text-muted-foreground mt-0.5">{t('Latest company announcements')}</p>
                 </div>
-                {hasPermission(permissions, 'manage-announcements') && (
+                {canShow(permissions, 'manage-announcements') && (
                   <Link href={route('hr.announcements.index')} className="flex items-center gap-1 text-xs text-primary font-medium shrink-0 hover:gap-1.5 transition-all duration-150">
                     {t('View all')} <ChevronRight className="h-3.5 w-3.5" />
                   </Link>
@@ -429,14 +430,14 @@ export default function EmployeeDashboard({ dashboardData }: { dashboardData: Em
           </Card>}
 
           {/* Upcoming Meetings */}
-          {hasPermission(permissions, 'view-meetings') && <Card className="border border-violet-100 dark:border-violet-900/40 shadow-sm dark:bg-slate-900 overflow-hidden">
+          {canShow(permissions, 'view-meetings') && <Card className="border border-violet-100 dark:border-violet-900/40 shadow-sm dark:bg-slate-900 overflow-hidden">
             <CardHeader className="pb-3 pt-5 px-5 border-b">
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="text-base font-semibold">{t('Upcoming Meetings')}</CardTitle>
                   <p className="text-xs text-muted-foreground mt-0.5">{t('Scheduled meetings from today onwards')}</p>
                 </div>
-                {hasPermission(permissions, 'manage-meetings') && (
+                {canShow(permissions, 'manage-meetings') && (
                   <Link href={route('meetings.meetings.index')} className="flex items-center gap-1 text-xs text-primary font-medium shrink-0 hover:gap-1.5 transition-all duration-150">
                     {t('View all')} <ChevronRight className="h-3.5 w-3.5" />
                   </Link>

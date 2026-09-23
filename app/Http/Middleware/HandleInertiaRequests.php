@@ -190,6 +190,9 @@ class HandleInertiaRequests extends Middleware
                 'error' => $request->session()->get('error'),
             ],
             'globalSettings' => $globalSettings,
+            'moduleVisibility' => fn () => $request->user() && file_exists(storage_path('installed'))
+                && !$request->is('install/*') && !$request->is('update/*')
+                ? \App\Support\ModuleVisibility::values() : (object) [],
             'is_demo' => config('app.is_demo'),
             'companySlug' => $companySlug,
         ];

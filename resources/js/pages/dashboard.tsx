@@ -17,7 +17,7 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer,
 } from 'recharts';
-import { hasPermission } from '@/utils/authorization';
+import { useModuleVisibility } from '@/hooks/use-module-visibility';
 import UserInitials from '@/components/user-initials';
 import { getImagePath } from '@/utils/helpers';
 
@@ -74,6 +74,7 @@ interface CompanyDashboardData {
 
 export default function Dashboard({ dashboardData }: { dashboardData: CompanyDashboardData }) {
   const { t } = useTranslation();
+  const { isVisible, canShow } = useModuleVisibility();
   const { auth, companySlug } = usePage().props as any;
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -255,7 +256,7 @@ console.log(navigator.clipboard);
             <p className="text-slate-400 text-xs mt-1 hidden sm:block group-hover:text-slate-300 transition-colors duration-300">
               {t("Here's what's happening across your company today.")}
             </p>
-            <div className="flex items-center gap-3 mt-3">
+            {isVisible('attendance-records') && <div className="flex items-center gap-3 mt-3">
               <div className="flex items-center gap-1.5">
                 <div className="w-2 h-2 bg-emerald-400/70 rounded-full animate-bounce" style={{ animationDelay: '0ms', animationDuration: '1.2s' }} />
                 <div className="w-2 h-2 bg-emerald-300/50 rounded-full animate-bounce" style={{ animationDelay: '150ms', animationDuration: '1.2s' }} />
@@ -264,7 +265,7 @@ console.log(navigator.clipboard);
               <span className="text-emerald-400 font-semibold text-sm group-hover:scale-105 transition-transform duration-200">
                 {stats.presentToday} {t('present today')}
               </span>
-            </div>
+            </div>}
           </div>
           <div className="flex items-center gap-2 flex-wrap shrink-0">
             {/* <div className="rounded-xl bg-white/10 px-4 py-2.5 text-center min-w-[80px] hover:bg-white/15 hover:scale-105 transition-all duration-300">
@@ -277,7 +278,7 @@ console.log(navigator.clipboard);
             </div> */}
             {isCompanyUser && (
               <>
-                {stats.activeJobPostings > 0 && hasPermission(perms, 'manage-career-page') && (
+                {stats.activeJobPostings > 0 && canShow(perms, 'manage-career-page') && (
                   <>
                     <div className="w-px h-10 bg-white/10 hidden sm:block" />
                     <div className="flex items-center gap-2 rounded-xl bg-white/10 px-3 py-2 hover:bg-white/15 transition-all duration-200">
@@ -306,9 +307,9 @@ console.log(navigator.clipboard);
                 )}
                 <div className="w-px h-10 bg-white/10 hidden sm:block" />
                 {[
-                  ...(hasPermission(perms, 'manage-job-postings') ? [{ icon: Briefcase, label: t('Jobs'), href: route('hr.recruitment.job-postings.index'), color: 'text-amber-300 hover:text-amber-200', bg: 'hover:bg-amber-400/10' }] : []),
-                  ...(hasPermission(perms, 'manage-candidates') ? [{ icon: UserPlus, label: t('Candidates'), href: route('hr.recruitment.candidates.index'), color: 'text-violet-300 hover:text-violet-200', bg: 'hover:bg-violet-400/10' }] : []),
-                  ...(hasPermission(perms, 'manage-settings') ? [{ icon: Settings, label: t('Settings'), href: route('settings'), color: 'text-slate-300 hover:text-slate-200', bg: 'hover:bg-white/10' }] : []),
+                  ...(canShow(perms, 'manage-job-postings') ? [{ icon: Briefcase, label: t('Jobs'), href: route('hr.recruitment.job-postings.index'), color: 'text-amber-300 hover:text-amber-200', bg: 'hover:bg-amber-400/10' }] : []),
+                  ...(canShow(perms, 'manage-candidates') ? [{ icon: UserPlus, label: t('Candidates'), href: route('hr.recruitment.candidates.index'), color: 'text-violet-300 hover:text-violet-200', bg: 'hover:bg-violet-400/10' }] : []),
+                  ...(canShow(perms, 'manage-settings') ? [{ icon: Settings, label: t('Settings'), href: route('settings'), color: 'text-slate-300 hover:text-slate-200', bg: 'hover:bg-white/10' }] : []),
                 ].map(({ icon: Icon, label, href, color, bg }) => (
                   <Link key={label} href={href} className={`flex flex-col items-center gap-1 rounded-xl px-3 py-2 transition-all duration-200 ${bg} group/qa`}>
                     <Icon className={`h-5 w-5 transition-all duration-200 ${color} group-hover/qa:-translate-y-0.5`} />
@@ -324,7 +325,7 @@ console.log(navigator.clipboard);
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
 
           {/* Payroll This Month */}
-          {hasPermission(perms, 'manage-payroll-runs') && (
+          {canShow(perms, 'manage-payroll-runs') && (
             <Link href={route('hr.payroll-runs.index')} className={`group col-span-1 ${fadeUp(270)}`}>
               <Card className="h-full border border-teal-200 dark:border-teal-900/50 shadow-sm bg-teal-50 dark:bg-teal-950/30 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer">
                 <CardContent className="relative overflow-hidden p-5">
@@ -344,7 +345,7 @@ console.log(navigator.clipboard);
           )}
 
           {/* Total Employees */}
-          {hasPermission(perms, 'manage-employees') && <Link href={route('hr.employees.index')} className={`group col-span-1 ${fadeUp(100)}`}>
+          {canShow(perms, 'manage-employees') && <Link href={route('hr.employees.index')} className={`group col-span-1 ${fadeUp(100)}`}>
             <Card className="h-full border border-blue-200 dark:border-blue-900/50 shadow-sm bg-blue-50 dark:bg-blue-950/30 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer">
               <CardContent className="relative overflow-hidden p-5">
                 {/* <span className="pointer-events-none absolute top-3 right-3 w-3 h-3 rounded-full bg-blue-400 shadow-[0_0_12px_4px_rgba(96,165,250,0.8)] animate-ping" style={{ animationDuration: '2.8s', animationDelay: '0.4s' }} /> */}
@@ -364,7 +365,7 @@ console.log(navigator.clipboard);
           </Link>}
 
           {/* Branches */}
-          {hasPermission(perms, 'manage-branches') && <Link href={route('hr.branches.index')} className={`group col-span-1 ${fadeUp(130)}`}>
+          {canShow(perms, 'manage-branches') && <Link href={route('hr.branches.index')} className={`group col-span-1 ${fadeUp(130)}`}>
             <Card className="h-full border border-emerald-200 dark:border-emerald-900/50 shadow-sm bg-emerald-50 dark:bg-emerald-950/30 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer">
               <CardContent className="relative overflow-hidden p-5">
                 {/* <span className="pointer-events-none absolute top-3 right-3 w-3 h-3 rounded-full bg-emerald-400 shadow-[0_0_12px_4px_rgba(52,211,153,0.8)] animate-ping" style={{ animationDuration: '3s', animationDelay: '0.8s' }} /> */}
@@ -376,13 +377,13 @@ console.log(navigator.clipboard);
                 </div>
                 <p className="text-emerald-700 dark:text-emerald-400 text-xs mb-1">{t('Branches')}</p>
                 <p className="text-emerald-900 dark:text-emerald-100 text-2xl font-bold tracking-tight">{stats.totalBranches.toLocaleString()}</p>
-                <p className="text-emerald-600 dark:text-emerald-500 text-[11px] mt-1.5">{stats.totalDepartments} {t('departments')}</p>
+                <p className="text-emerald-600 dark:text-emerald-500 text-[11px] mt-1.5">{isVisible('departments') && <>{stats.totalDepartments} {t('departments')}</>}</p>
               </CardContent>
             </Card>
           </Link>}
 
           {/* Attendance Rate */}
-          {hasPermission(perms, 'manage-attendance-records') && <div className={`group col-span-1 ${fadeUp(160)}`}>
+          {canShow(perms, 'manage-attendance-records') && <div className={`group col-span-1 ${fadeUp(160)}`}>
             <Card className="h-full border border-violet-200 dark:border-violet-900/50 shadow-sm bg-violet-50 dark:bg-violet-950/30 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
               <CardContent className="relative overflow-hidden p-5">
                 {/* <span className="pointer-events-none absolute top-3 right-3 w-3 h-3 rounded-full bg-violet-400 shadow-[0_0_12px_4px_rgba(167,139,250,0.8)] animate-ping" style={{ animationDuration: '2.6s', animationDelay: '1.2s' }} /> */}
@@ -401,7 +402,7 @@ console.log(navigator.clipboard);
           </div>}
 
           {/* Pending Leaves */}
-          {hasPermission(perms, 'manage-leave-applications') && <Link href={route('hr.leave-applications.index')} className={`group col-span-1 ${fadeUp(190)}`}>
+          {canShow(perms, 'manage-leave-applications') && <Link href={route('hr.leave-applications.index')} className={`group col-span-1 ${fadeUp(190)}`}>
             <Card className={`h-full border shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer ${
               stats.pendingLeaves > 0
                 ? 'border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30'
@@ -425,7 +426,7 @@ console.log(navigator.clipboard);
           </Link>}
 
           {/* Active Jobs */}
-          {hasPermission(perms, 'manage-job-postings') && <Link href={route('hr.recruitment.job-postings.index')} className={`group col-span-1 ${fadeUp(220)}`}>
+          {canShow(perms, 'manage-job-postings') && <Link href={route('hr.recruitment.job-postings.index')} className={`group col-span-1 ${fadeUp(220)}`}>
             <Card className="h-full border border-orange-200 dark:border-orange-900/50 shadow-sm bg-orange-50 dark:bg-orange-950/30 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer">
               <CardContent className="relative overflow-hidden p-5">
                 {/* <span className="pointer-events-none absolute top-3 right-3 w-3 h-3 rounded-full bg-orange-400 shadow-[0_0_12px_4px_rgba(251,146,60,0.8)] animate-ping" style={{ animationDuration: '3.2s', animationDelay: '1s' }} /> */}
@@ -450,7 +451,7 @@ console.log(navigator.clipboard);
         <div className={`grid gap-4 lg:grid-cols-2 ${fadeUp(285)}`}>
 
             {/* Today's Birthdays */}
-            <Card className="border border-pink-200 dark:border-pink-900/40 shadow-sm dark:bg-slate-900 overflow-hidden relative">
+            {isVisible('birthdays') && isVisible('employees') && <Card className="border border-pink-200 dark:border-pink-900/40 shadow-sm dark:bg-slate-900 overflow-hidden relative">
                 {/* Sparkles */}
                 <span className="pointer-events-none absolute top-3 left-8 w-1.5 h-1.5 rounded-sm rotate-45 bg-pink-400/60 animate-ping" style={{ animationDuration: '2.4s' }} />
                 <span className="pointer-events-none absolute top-6 left-1/4 w-1 h-1 rounded-sm rotate-45 bg-fuchsia-400/50 animate-ping" style={{ animationDuration: '3.1s', animationDelay: '0.6s' }} />
@@ -510,10 +511,10 @@ console.log(navigator.clipboard);
                     </div>
                   )}
                 </CardContent>
-            </Card>
+            </Card>}
 
             {/* Today's On Leave */}
-            <Card className="border border-amber-200 dark:border-amber-900/40 shadow-sm dark:bg-slate-900 overflow-hidden relative">
+            {isVisible('leave-applications') && <Card className="border border-amber-200 dark:border-amber-900/40 shadow-sm dark:bg-slate-900 overflow-hidden relative">
                 {/* Leaf animations */}
                 {/* <span className="pointer-events-none absolute top-2 left-6 w-3 h-5 rounded-full rotate-45 bg-amber-300/40 animate-pulse" style={{ animationDuration: '3s' }} />
                 <span className="pointer-events-none absolute top-4 left-1/3 w-2 h-4 rounded-full -rotate-12 bg-green-300/30 animate-pulse" style={{ animationDuration: '4s', animationDelay: '0.8s' }} />
@@ -570,7 +571,7 @@ console.log(navigator.clipboard);
                     </div>
                   )}
                 </CardContent>
-            </Card>
+            </Card>}
 
         </div>
 
@@ -578,7 +579,7 @@ console.log(navigator.clipboard);
         <div className={`grid gap-4 lg:grid-cols-2 ${fadeUp(450)}`}>
 
           {/* Attendance Weekly */}
-          {hasPermission(perms, 'manage-attendance-records') && <Card className="border border-border shadow-sm dark:bg-slate-900 overflow-hidden">
+          {canShow(perms, 'manage-attendance-records') && <Card className="border border-border shadow-sm dark:bg-slate-900 overflow-hidden">
             <CardHeader className="pb-3 pt-5 px-5 border-b">
               <div>
                 <CardTitle className="text-base font-semibold">{t('Attendance - Last 7 Days')}</CardTitle>
@@ -616,7 +617,7 @@ console.log(navigator.clipboard);
           </Card>}
 
           {/* Leave Overview by Type */}
-          {hasPermission(perms, 'manage-leave-applications') && <Card className="border border-border shadow-sm dark:bg-slate-900 overflow-hidden">
+          {canShow(perms, 'manage-leave-applications') && <Card className="border border-border shadow-sm dark:bg-slate-900 overflow-hidden">
             <CardHeader className="pb-3 pt-5 px-5 border-b">
               <div className="flex items-center justify-between">
                 <div>
@@ -675,7 +676,7 @@ console.log(navigator.clipboard);
         <div className={`grid gap-4 lg:grid-cols-2 ${fadeUp(300)}`}>
 
           {/* Recent Leave Applications */}
-          {hasPermission(perms, 'manage-leave-applications') && <Card className="border border-amber-100 dark:border-amber-900/40 shadow-sm dark:bg-slate-900 overflow-hidden">
+          {canShow(perms, 'manage-leave-applications') && <Card className="border border-amber-100 dark:border-amber-900/40 shadow-sm dark:bg-slate-900 overflow-hidden">
             <CardHeader className="pb-3 pt-5 px-5 border-b">
               <div className="flex items-center justify-between">
                 <div>
@@ -730,7 +731,7 @@ console.log(navigator.clipboard);
           </Card>}
 
           {/* Recent Candidates */}
-          {hasPermission(perms, 'manage-candidates') && <Card className="border border-indigo-100 dark:border-indigo-900/40 shadow-sm dark:bg-slate-900 overflow-hidden">
+          {canShow(perms, 'manage-candidates') && <Card className="border border-indigo-100 dark:border-indigo-900/40 shadow-sm dark:bg-slate-900 overflow-hidden">
             <CardHeader className="pb-3 pt-5 px-5 border-b">
               <div className="flex items-center justify-between">
                 <div>
@@ -778,7 +779,7 @@ console.log(navigator.clipboard);
           </Card>}
 
           {/* Recent Announcements */}
-          {hasPermission(perms, 'manage-announcements') && <Card className="border border-blue-100 dark:border-blue-900/40 shadow-sm dark:bg-slate-900 overflow-hidden">
+          {canShow(perms, 'manage-announcements') && <Card className="border border-blue-100 dark:border-blue-900/40 shadow-sm dark:bg-slate-900 overflow-hidden">
             <CardHeader className="pb-3 pt-5 px-5 border-b">
               <div className="flex items-center justify-between">
                 <div>
@@ -824,7 +825,7 @@ console.log(navigator.clipboard);
           </Card>}
 
           {/* Upcoming Meetings */}
-          {hasPermission(perms, 'manage-meetings') && <Card className="border border-violet-100 dark:border-violet-900/40 shadow-sm dark:bg-slate-900 overflow-hidden">
+          {canShow(perms, 'manage-meetings') && <Card className="border border-violet-100 dark:border-violet-900/40 shadow-sm dark:bg-slate-900 overflow-hidden">
             <CardHeader className="pb-3 pt-5 px-5 border-b">
               <div className="flex items-center justify-between">
                 <div>
@@ -878,7 +879,7 @@ console.log(navigator.clipboard);
         <div className={`grid gap-4 lg:grid-cols-1 ${fadeUp(350)}`}>
 
           {/* Hiring Trend */}
-          {hasPermission(perms, 'manage-employees') && <Card className="border border-border shadow-sm dark:bg-slate-900 overflow-hidden">
+          {canShow(perms, 'manage-employees') && <Card className="border border-border shadow-sm dark:bg-slate-900 overflow-hidden">
             <CardHeader className="pb-3 pt-5 px-5 border-b">
               <div className="flex items-center justify-between gap-3 flex-wrap">
                 <div>
@@ -936,7 +937,7 @@ console.log(navigator.clipboard);
         {/* ── Charts : Department Distribution + Candidate Pipeline ── */}
         <div className={`grid gap-4 lg:grid-cols-1 ${fadeUp(400)}`}>
           {/* Payroll Trend */}
-          {hasPermission(perms, 'manage-payroll-runs') && <Card className="border border-border shadow-sm dark:bg-slate-900 overflow-hidden">
+          {canShow(perms, 'manage-payroll-runs') && <Card className="border border-border shadow-sm dark:bg-slate-900 overflow-hidden">
             <CardHeader className="pb-3 pt-5 px-5 border-b">
               <div className="flex items-center justify-between">
                 <div>
@@ -995,7 +996,7 @@ console.log(navigator.clipboard);
         <div className={`grid gap-4 lg:grid-cols-2 ${fadeUp(500)}`}>
 
           {/* Asset Status */}
-          {hasPermission(perms, 'manage-assets') && <Card className="border border-border shadow-sm dark:bg-slate-900 overflow-hidden">
+          {canShow(perms, 'manage-assets') && <Card className="border border-border shadow-sm dark:bg-slate-900 overflow-hidden">
             <CardHeader className="pb-3 pt-5 px-5 border-b">
               <div className="flex items-center justify-between">
                 <div>
@@ -1043,7 +1044,7 @@ console.log(navigator.clipboard);
 
 
           {/* Candidate Pipeline */}
-          {hasPermission(perms, 'manage-candidates') && <Card className="border border-border shadow-sm dark:bg-slate-900 overflow-hidden">
+          {canShow(perms, 'manage-candidates') && <Card className="border border-border shadow-sm dark:bg-slate-900 overflow-hidden">
             <CardHeader className="pb-3 pt-5 px-5 border-b">
               <div className="flex items-center justify-between">
                 <div>
