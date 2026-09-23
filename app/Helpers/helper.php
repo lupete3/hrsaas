@@ -41,7 +41,7 @@ if (!function_exists('getCacheSize')) {
 }
 
 if (!function_exists('settings')) {
-    function settings($user_id = null)
+    function settings($user_id = null): array
     {
         // Skip database queries during installation
         if (request()->is('install/*') || request()->is('update/*') || !file_exists(storage_path('installed'))) {
@@ -77,7 +77,7 @@ if (!function_exists('settings')) {
         }
 
         if (!$user_id) {
-            return collect();
+            return [];
         }
         $userSettings = Setting::where('user_id', $user_id)->pluck('value', 'key')->toArray();
 
