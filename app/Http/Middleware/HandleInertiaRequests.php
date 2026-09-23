@@ -190,6 +190,9 @@ class HandleInertiaRequests extends Middleware
                 'error' => $request->session()->get('error'),
             ],
             'globalSettings' => $globalSettings,
+            'employeeFieldVisibility' => fn () => $request->user() && file_exists(storage_path('installed'))
+                && !$request->is('install/*') && !$request->is('update/*')
+                ? \App\Support\EmployeeFields::visibility() : (object) [],
             'moduleVisibility' => fn () => $request->user() && file_exists(storage_path('installed'))
                 && !$request->is('install/*') && !$request->is('update/*')
                 ? \App\Support\ModuleVisibility::values() : (object) [],

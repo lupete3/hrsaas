@@ -98,6 +98,7 @@ export function AppSidebar() {
             group: t('System Control'),
         },
         { title: 'Visibilité des modules', href: route('settings.modules.index'), icon: Settings, group: t('System Control') },
+        { title: 'Champs des employés', href: route('settings.employee-fields.index'), icon: Settings, group: t('System Control') },
     ];
 
     const buildCommonNavItems = (): NavItem[] => {

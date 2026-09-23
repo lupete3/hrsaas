@@ -331,7 +331,10 @@ export default function Settings() {
       title={t('Settings')}
       url="/settings"
       description={t('Manage system settings.')}
-      actions={auth.user?.type === 'superadmin' ? [{ label: 'Visibilité des modules', onClick: () => router.visit(route('settings.modules.index')) }] : []}
+      actions={auth.user?.type === 'superadmin' ? [
+        { label: 'Visibilité des modules', onClick: () => router.visit(route('settings.modules.index')) },
+        { label: 'Champs des employés', onClick: () => router.visit(route('settings.employee-fields.index')) },
+      ] : []}
       breadcrumbs={[
         { title: t('Dashboard'), href: route('dashboard') },
         { title: t('Settings') }

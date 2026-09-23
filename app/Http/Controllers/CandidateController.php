@@ -391,8 +391,9 @@ class CandidateController extends Controller
     public function storeEmployee(Request $request)
     {
         try {
+            [$request, $fieldConfiguration] = \App\Support\EmployeeFields::prepare($request);
             // Validate the request
-            $validator = Validator::make($request->all(), [
+            $validator = Validator::make($request->all(), \App\Support\EmployeeFields::rules([
                 'candidate_id' => 'required|exists:candidates,id',
                 'name' => 'required|string|max:255',
                 'email' => 'required|email|max:255|unique:users,email',
@@ -417,7 +418,7 @@ class CandidateController extends Controller
                 'account_holder_name' => 'required|string|max:255',
                 'account_number' => 'required|string|max:50',
                 'salary' => 'required|numeric|min:0',
-            ]);
+            ], $fieldConfiguration));
 
             if ($validator->fails()) {
                 return redirect()->back()->withErrors($validator)->withInput();
@@ -487,6 +488,7 @@ class CandidateController extends Controller
                 'bank_identifier_code' => $request->bank_identifier_code,
                 'bank_branch' => $request->bank_branch,
                 'tax_payer_id' => $request->tax_payer_id,
+                'base_salary' => $request->salary,
                 'created_by' => creatorId(),
             ]);
 

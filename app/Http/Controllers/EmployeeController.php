@@ -16,6 +16,7 @@ use App\Models\NocTemplate;
 use App\Models\Shift;
 use App\Models\Termination;
 use App\Models\User;
+use App\Support\EmployeeFields;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -215,8 +216,9 @@ class EmployeeController extends Controller
     {
         if (Auth::user()->can('create-employees')) {
             try {
+                [$request, $fieldConfiguration] = EmployeeFields::prepare($request);
                 // Validate basic information
-                $validator = Validator::make($request->all(), [
+                $validator = Validator::make($request->all(), EmployeeFields::rules([
                     'name' => 'required|string|max:255',
                     'biometric_emp_id' => 'nullable|string|max:255|unique:employees,biometric_emp_id',
                     'email' => 'required|email|max:255|unique:users,email',
@@ -259,9 +261,10 @@ class EmployeeController extends Controller
                     'documents.*.document_type_id' => 'required|exists:document_types,id',
                     'documents.*.file' => 'required|file|mimes:jpeg,png,jpg,pdf,doc,docx|max:5120',
                     'documents.*.expiry_date' => 'nullable|date',
-                ]);
+                ], $fieldConfiguration));
 
-                $validator->after(function ($validator) use ($request) {
+                $validator->after(function ($validator) use ($request, $fieldConfiguration) {
+                    if (!$fieldConfiguration['documents']['visible']) return;
                     $requiredDocTypes = DocumentType::whereIn('created_by', getCompanyAndUsersId())
                         ->where('is_required', 1)
                         ->pluck('id')->toArray();
@@ -340,6 +343,8 @@ class EmployeeController extends Controller
                 $employee->branch_id = $request->branch_id;
                 $employee->department_id = $request->department_id;
                 $employee->designation_id = $request->designation_id;
+                $employee->shift_id = $request->shift_id;
+                $employee->attendance_policy_id = $request->attendance_policy_id;
                 $employee->date_of_joining = $request->date_of_joining;
                 $employee->employment_type = $request->employment_type;
                 $employee->employee_status = $request->employee_status;
@@ -527,8 +532,9 @@ class EmployeeController extends Controller
             }
 
             try {
+                [$request, $fieldConfiguration] = EmployeeFields::prepare($request, $employee);
                 // Validate basic information
-                $validator = Validator::make($request->all(), [
+                $validator = Validator::make($request->all(), EmployeeFields::rules([
                     'name' => 'required|string|max:255',
                     'biometric_emp_id' => 'nullable|string|max:255|unique:employees,biometric_emp_id,' . $employee->id,
                     'email' => 'required|email|max:255|unique:users,email,' . $employee->user_id,
@@ -571,7 +577,16 @@ class EmployeeController extends Controller
                     'documents.*.document_type_id' => 'required|exists:document_types,id',
                     'documents.*.file' => 'required|file|mimes:jpeg,png,jpg,pdf,doc,docx|max:5120',
                     'documents.*.expiry_date' => 'nullable|date',
-                ]);
+                ], $fieldConfiguration, true));
+
+                $validator->after(function ($validator) use ($request, $employee, $fieldConfiguration) {
+                    foreach (['department_id' => 'branch_id', 'designation_id' => 'department_id'] as $child => $parent) {
+                        if (!$fieldConfiguration[$child]['visible'] && $employee->getRawOriginal($child) !== null
+                            && (string) $request->input($parent) !== (string) $employee->getRawOriginal($parent)) {
+                            $validator->errors()->add($parent, 'Cette affectation ne peut pas changer tant que le champ dépendant est masqué. Demandez au super administrateur de le réafficher.');
+                        }
+                    }
+                });
 
                 if ($validator->fails()) {
                     return redirect()->back()->withErrors($validator)->withInput();

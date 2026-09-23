@@ -5702,5 +5702,7 @@
     "View interview information.": "Voir les informations sur les entretiens.",
     "Visually manage candidate pipelines and drag across recruitment stages.": "Gérer visuellement les pipelines de candidats et traîner à travers les étapes de recrutement.",
     "Visually track and manage candidate job offer stages.": "Suivez et gérez visuellement les étapes de l'offre d'emploi des candidats.",
-    "Failed to delete document: {{errors}}": "Impossible de supprimer le document : {{errors}}"
+    "Failed to delete document: {{errors}}": "Impossible de supprimer le document : {{errors}}",
+    "Emergency Contact Name": "Nom de la personne à contacter en cas d’urgence",
+    "Emergency Contact Phone": "Téléphone du contact d’urgence"
 }

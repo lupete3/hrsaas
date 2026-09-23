@@ -1,3 +1,4 @@
+import { useEmployeeFields } from '@/hooks/use-employee-fields';
 import { useState } from 'react';
 import { PageTemplate } from '@/components/page-template';
 import { usePage, router } from '@inertiajs/react';
@@ -13,6 +14,7 @@ import { ArrowLeft, ArrowRight, Check, Plus, Trash2 } from 'lucide-react';
 
 export default function ConvertToEmployee() {
   const { t } = useTranslation();
+  const { visible, visibleErrors, availableSteps, nextStep, previousStep, lastStep } = useEmployeeFields();
   const { candidate, branches, departments, designations, documentTypes, shifts, attendancePolicies, generatedEmployeeId } = usePage().props as any;
 
   // Initialize required documents
@@ -204,8 +206,9 @@ export default function ConvertToEmployee() {
       if (!formData.bank_branch)          e.bank_branch = t('Bank branch is required');
       if (!formData.salary)               e.salary = t('Salary is required');
     }
-    setErrors(e);
-    return Object.keys(e).length === 0;
+    const filteredErrors = visibleErrors(e);
+    setErrors(filteredErrors);
+    return Object.keys(filteredErrors).length === 0;
   };
 
   const STEP_FIELDS: Record<number, string[]> = {
@@ -232,14 +235,14 @@ export default function ConvertToEmployee() {
 
     // Add all form fields
     Object.entries(formData).forEach(([key, value]) => {
-      if (key !== 'documents') {
+      if (key !== 'documents' && visible(key)) {
         if (value !== null && value !== undefined && value !== '') {
           submitData.append(key, value);
         }
       }
     });
 
-    if (profileImage) {
+    if (visible('profile_image') && profileImage) {
       submitData.append('profile_image', profileImage);
     }
 
@@ -247,7 +250,7 @@ export default function ConvertToEmployee() {
     submitData.append('candidate_id', candidate.id.toString());
 
     // Add documents
-    formData.documents.forEach((doc: any, index: number) => {
+    if (visible('documents')) formData.documents.forEach((doc: any, index: number) => {
       if (doc.document_type_id) {
         submitData.append(`documents[${index}][document_type_id]`, doc.document_type_id);
       }
@@ -331,6 +334,7 @@ export default function ConvertToEmployee() {
         {/* Step Indicator */}
         <div className="flex items-center w-full">
           {STEPS.map((s, i) => {
+            if (!availableSteps.includes(i)) return null;
             const done   = i < currentStep;
             const active = i === currentStep;
             const hasErr = stepHasError(i);
@@ -343,7 +347,7 @@ export default function ConvertToEmployee() {
                     active ? 'border-primary text-primary bg-white dark:bg-gray-900' :
                              'border-gray-300 dark:border-gray-600 text-gray-400 bg-white dark:bg-gray-900'
                   }`}>
-                    {done && !hasErr ? <Check className="h-4 w-4" /> : i + 1}
+                    {done && !hasErr ? <Check className="h-4 w-4" /> : availableSteps.indexOf(i) + 1}
                   </div>
                   <span className={`text-sm font-medium hidden sm:block ${
                     hasErr ? 'text-red-600' :
@@ -352,7 +356,7 @@ export default function ConvertToEmployee() {
                              'text-gray-400 dark:text-gray-500'
                   }`}>{s.label}</span>
                 </div>
-                {i < STEPS.length - 1 && (
+                {i < lastStep && (
                   <div className={`flex-1 h-px mx-3 transition-colors ${done && !hasErr ? 'bg-primary' : 'bg-gray-200 dark:bg-gray-700'}`} />
                 )}
               </div>
@@ -367,7 +371,7 @@ export default function ConvertToEmployee() {
           </CardHeader>
           <CardContent className="space-y-4 pt-2">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
+              {visible('name') && <div className="space-y-2">
                 <Label htmlFor="name" required>{t('Full Name')}</Label>
                 <Input
                   id="name"
@@ -378,9 +382,9 @@ export default function ConvertToEmployee() {
                   className={errors.name ? 'border-red-500' : ''}
                 />
                 {errors.name && <p className="text-red-500 text-xs">{errors.name}</p>}
-              </div>
+              </div>}
 
-              <div className="space-y-2">
+              {visible('employee_id') && <div className="space-y-2">
                 <Label htmlFor="employee_id">{t('Employee ID')}</Label>
                 <Input
                   id="employee_id"
@@ -389,9 +393,9 @@ export default function ConvertToEmployee() {
                   className="bg-muted"
                 />
                 <p className="text-sm text-muted-foreground">{t('Employee ID will be auto-generated')}</p>
-              </div>
+              </div>}
 
-              <div className="space-y-2">
+              {visible('biometric_emp_id') && <div className="space-y-2">
                 <Label htmlFor="biometric_emp_id" required>{t('Employee Code')}</Label>
                 <Input
                   id="biometric_emp_id"
@@ -402,9 +406,9 @@ export default function ConvertToEmployee() {
                   className={errors.biometric_emp_id ? 'border-red-500' : ''}
                 />
                 {errors.biometric_emp_id && <p className="text-red-500 text-xs">{errors.biometric_emp_id}</p>}
-              </div>
+              </div>}
 
-              <div className="space-y-2">
+              {visible('email') && <div className="space-y-2">
                 <Label htmlFor="email" required>{t('Email')} </Label>
                 <Input
                   id="email"
@@ -416,9 +420,9 @@ export default function ConvertToEmployee() {
                   className={errors.email ? 'border-red-500' : ''}
                 />
                 {errors.email && <p className="text-red-500 text-xs">{errors.email}</p>}
-              </div>
+              </div>}
 
-              <div className="space-y-2">
+              {visible('password') && <div className="space-y-2">
                 <Label htmlFor="password" required>{t('Password')} </Label>
                 <Input
                   id="password"
@@ -430,9 +434,9 @@ export default function ConvertToEmployee() {
                   className={errors.password ? 'border-red-500' : ''}
                 />
                 {errors.password && <p className="text-red-500 text-xs">{errors.password}</p>}
-              </div>
+              </div>}
 
-              <div className="space-y-2">
+              {visible('phone') && <div className="space-y-2">
                 <Label htmlFor="phone" required>{t('Phone Number')}</Label>
                 <Input
                   id="phone"
@@ -443,9 +447,9 @@ export default function ConvertToEmployee() {
                   className={errors.phone ? 'border-red-500' : ''}
                 />
                 {errors.phone && <p className="text-red-500 text-xs">{errors.phone}</p>}
-              </div>
+              </div>}
 
-              <div className="space-y-2">
+              {visible('date_of_birth') && <div className="space-y-2">
                 <Label htmlFor="date_of_birth" required>{t('Date of Birth')}</Label>
                 <Input
                   id="date_of_birth"
@@ -456,9 +460,9 @@ export default function ConvertToEmployee() {
                   className={errors.date_of_birth ? 'border-red-500' : ''}
                 />
                 {errors.date_of_birth && <p className="text-red-500 text-xs">{errors.date_of_birth}</p>}
-              </div>
+              </div>}
 
-              <div className="space-y-2">
+              {visible('gender') && <div className="space-y-2">
                 <Label htmlFor="gender" required>{t('Gender')}</Label>
                 <RadioGroup
                   value={formData.gender}
@@ -479,9 +483,9 @@ export default function ConvertToEmployee() {
                   </div>
                 </RadioGroup>
                 {errors.gender && <p className="text-red-500 text-xs">{errors.gender}</p>}
-              </div>
+              </div>}
 
-              <div className="space-y-2">
+              {visible('profile_image') && <div className="space-y-2">
                 <Label required>{t('Profile Image')}</Label>
                 <div className="flex flex-col gap-3">
                   <div className="border rounded-md p-4 flex items-center justify-center bg-muted/30 h-32">
@@ -500,7 +504,7 @@ export default function ConvertToEmployee() {
                   <p className="text-xs text-muted-foreground">{t('Max file size: 2MB')}</p>
                 </div>
                 {errors.profile_image && <p className="text-red-500 text-xs">{errors.profile_image}</p>}
-              </div>
+              </div>}
             </div>
           </CardContent>
         </Card>}
@@ -511,7 +515,7 @@ export default function ConvertToEmployee() {
           </CardHeader>
           <CardContent className="space-y-4 pt-2">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
+              {visible('branch_id') && <div className="space-y-2">
                 <Label htmlFor="branch_id" required>{t('Branch')} </Label>
                 <Select
                   value={formData.branch_id}
@@ -530,9 +534,9 @@ export default function ConvertToEmployee() {
                   </SelectContent>
                 </Select>
                 {errors.branch_id && <p className="text-red-500 text-xs">{errors.branch_id}</p>}
-              </div>
+              </div>}
 
-              <div className="space-y-2">
+              {visible('department_id') && <div className="space-y-2">
                 <Label htmlFor="department_id" required>{t('Department')} </Label>
                 <Select
                   value={formData.department_id}
@@ -552,9 +556,9 @@ export default function ConvertToEmployee() {
                   </SelectContent>
                 </Select>
                 {errors.department_id && <p className="text-red-500 text-xs">{errors.department_id}</p>}
-              </div>
+              </div>}
 
-              <div className="space-y-2">
+              {visible('designation_id') && <div className="space-y-2">
                 <Label htmlFor="designation_id" required>{t('Designation')} </Label>
                 <Select
                   value={formData.designation_id}
@@ -574,9 +578,9 @@ export default function ConvertToEmployee() {
                   </SelectContent>
                 </Select>
                 {errors.designation_id && <p className="text-red-500 text-xs">{errors.designation_id}</p>}
-              </div>
+              </div>}
 
-              <div className="space-y-2">
+              {visible('date_of_joining') && <div className="space-y-2">
                 <Label htmlFor="date_of_joining" required>{t('Date of Joining')} </Label>
                 <Input
                   id="date_of_joining"
@@ -587,9 +591,9 @@ export default function ConvertToEmployee() {
                   className={errors.date_of_joining ? 'border-red-500' : ''}
                 />
                 {errors.date_of_joining && <p className="text-red-500 text-xs">{errors.date_of_joining}</p>}
-              </div>
+              </div>}
 
-              <div className="space-y-2">
+              {visible('employment_type') && <div className="space-y-2">
                 <Label htmlFor="employment_type" required>{t('Employment Type')}</Label>
                 <Select
                   value={formData.employment_type}
@@ -605,9 +609,9 @@ export default function ConvertToEmployee() {
                     <SelectItem value="Internship">{t('Internship')}</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
+              </div>}
 
-              <div className="space-y-2">
+              {visible('employee_status') && <div className="space-y-2">
                 <Label htmlFor="employee_status" required>{t('Employee Status')}</Label>
                 <Select
                   value={formData.employee_status}
@@ -624,9 +628,9 @@ export default function ConvertToEmployee() {
                   </SelectContent>
                 </Select>
                 {errors.employee_status && <p className="text-red-500 text-xs">{errors.employee_status}</p>}
-              </div>
+              </div>}
 
-              <div className="space-y-2">
+              {visible('shift_id') && <div className="space-y-2">
                 <Label htmlFor="shift_id">{t('Shift')}</Label>
                 <Select
                   value={formData.shift_id}
@@ -643,9 +647,9 @@ export default function ConvertToEmployee() {
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
+              </div>}
 
-              <div className="space-y-2">
+              {visible('attendance_policy_id') && <div className="space-y-2">
                 <Label htmlFor="attendance_policy_id">{t('Attendance Policy')}</Label>
                 <Select
                   value={formData.attendance_policy_id}
@@ -662,7 +666,7 @@ export default function ConvertToEmployee() {
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
+              </div>}
             </div>
           </CardContent>
         </Card>}
@@ -673,7 +677,7 @@ export default function ConvertToEmployee() {
           </CardHeader>
           <CardContent className="space-y-4 pt-2">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
+              {visible('address_line_1') && <div className="space-y-2">
                 <Label htmlFor="address_line_1" required>{t('Address Line 1')} </Label>
                 <Input
                   id="address_line_1"
@@ -684,9 +688,9 @@ export default function ConvertToEmployee() {
                   className={errors.address_line_1 ? 'border-red-500' : ''}
                 />
                 {errors.address_line_1 && <p className="text-red-500 text-xs">{errors.address_line_1}</p>}
-              </div>
+              </div>}
 
-              <div className="space-y-2">
+              {visible('address_line_2') && <div className="space-y-2">
                 <Label htmlFor="address_line_2">{t('Address Line 2')}</Label>
                 <Input
                   id="address_line_2"
@@ -694,9 +698,9 @@ export default function ConvertToEmployee() {
                   onChange={(e) => handleChange('address_line_2', e.target.value)}
                   placeholder={t('e.g. Apartment, Floor, Building')}
                 />
-              </div>
+              </div>}
 
-              <div className="space-y-2">
+              {visible('city') && <div className="space-y-2">
                 <Label htmlFor="city" required>{t('City')} </Label>
                 <Input
                   id="city"
@@ -707,9 +711,9 @@ export default function ConvertToEmployee() {
                   className={errors.city ? 'border-red-500' : ''}
                 />
                 {errors.city && <p className="text-red-500 text-xs">{errors.city}</p>}
-              </div>
+              </div>}
 
-              <div className="space-y-2">
+              {visible('state') && <div className="space-y-2">
                 <Label htmlFor="state" required>{t('State/Province')} </Label>
                 <Input
                   id="state"
@@ -720,9 +724,9 @@ export default function ConvertToEmployee() {
                   className={errors.state ? 'border-red-500' : ''}
                 />
                 {errors.state && <p className="text-red-500 text-xs">{errors.state}</p>}
-              </div>
+              </div>}
 
-              <div className="space-y-2">
+              {visible('country') && <div className="space-y-2">
                 <Label htmlFor="country" required>{t('Country')} </Label>
                 <Input
                   id="country"
@@ -733,9 +737,9 @@ export default function ConvertToEmployee() {
                   className={errors.country ? 'border-red-500' : ''}
                 />
                 {errors.country && <p className="text-red-500 text-xs">{errors.country}</p>}
-              </div>
+              </div>}
 
-              <div className="space-y-2">
+              {visible('postal_code') && <div className="space-y-2">
                 <Label htmlFor="postal_code" required>{t('Postal/Zip Code')} </Label>
                 <Input
                   id="postal_code"
@@ -746,13 +750,13 @@ export default function ConvertToEmployee() {
                   className={errors.postal_code ? 'border-red-500' : ''}
                 />
                 {errors.postal_code && <p className="text-red-500 text-xs">{errors.postal_code}</p>}
-              </div>
+              </div>}
             </div>
 
             <div className="mt-6">
               <h3 className="text-lg font-medium mb-4">{t('Emergency Contact')}</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
+                {visible('emergency_contact_name') && <div className="space-y-2">
                   <Label htmlFor="emergency_contact_name" required>{t('Name')} </Label>
                   <Input
                     id="emergency_contact_name"
@@ -763,9 +767,9 @@ export default function ConvertToEmployee() {
                     className={errors.emergency_contact_name ? 'border-red-500' : ''}
                   />
                   {errors.emergency_contact_name && <p className="text-red-500 text-xs">{errors.emergency_contact_name}</p>}
-                </div>
+                </div>}
 
-                <div className="space-y-2">
+                {visible('emergency_contact_relationship') && <div className="space-y-2">
                   <Label htmlFor="emergency_contact_relationship" required>{t('Relationship')} </Label>
                   <Input
                     id="emergency_contact_relationship"
@@ -776,9 +780,9 @@ export default function ConvertToEmployee() {
                     className={errors.emergency_contact_relationship ? 'border-red-500' : ''}
                   />
                   {errors.emergency_contact_relationship && <p className="text-red-500 text-xs">{errors.emergency_contact_relationship}</p>}
-                </div>
+                </div>}
 
-                <div className="space-y-2">
+                {visible('emergency_contact_number') && <div className="space-y-2">
                   <Label htmlFor="emergency_contact_number" required>{t('Phone Number')} </Label>
                   <Input
                     id="emergency_contact_number"
@@ -789,7 +793,7 @@ export default function ConvertToEmployee() {
                     className={errors.emergency_contact_number ? 'border-red-500' : ''}
                   />
                   {errors.emergency_contact_number && <p className="text-red-500 text-xs">{errors.emergency_contact_number}</p>}
-                </div>
+                </div>}
               </div>
             </div>
           </CardContent>
@@ -801,7 +805,7 @@ export default function ConvertToEmployee() {
           </CardHeader>
           <CardContent className="space-y-4 pt-2">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
+              {visible('bank_name') && <div className="space-y-2">
                 <Label htmlFor="bank_name" required>{t('Bank Name')} </Label>
                 <Input
                   id="bank_name"
@@ -812,9 +816,9 @@ export default function ConvertToEmployee() {
                   className={errors.bank_name ? 'border-red-500' : ''}
                 />
                 {errors.bank_name && <p className="text-red-500 text-xs">{errors.bank_name}</p>}
-              </div>
+              </div>}
 
-              <div className="space-y-2">
+              {visible('account_holder_name') && <div className="space-y-2">
                 <Label htmlFor="account_holder_name" required>{t('Account Holder Name')} </Label>
                 <Input
                   id="account_holder_name"
@@ -825,9 +829,9 @@ export default function ConvertToEmployee() {
                   className={errors.account_holder_name ? 'border-red-500' : ''}
                 />
                 {errors.account_holder_name && <p className="text-red-500 text-xs">{errors.account_holder_name}</p>}
-              </div>
+              </div>}
 
-              <div className="space-y-2">
+              {visible('account_number') && <div className="space-y-2">
                 <Label htmlFor="account_number" required>{t('Account Number')} </Label>
                 <Input
                   id="account_number"
@@ -838,9 +842,9 @@ export default function ConvertToEmployee() {
                   className={errors.account_number ? 'border-red-500' : ''}
                 />
                 {errors.account_number && <p className="text-red-500 text-xs">{errors.account_number}</p>}
-              </div>
+              </div>}
 
-              <div className="space-y-2" >
+              {visible('bank_identifier_code') && <div className="space-y-2" >
                 <Label htmlFor="bank_identifier_code" required>{t('Bank Identifier Code (BIC/SWIFT)')}</Label>
                 <Input
                   id="bank_identifier_code"
@@ -850,9 +854,9 @@ export default function ConvertToEmployee() {
                   className={errors.bank_identifier_code ? 'border-red-500' : ''}
                 />
                 {errors.bank_identifier_code && <p className="text-red-500 text-xs">{errors.bank_identifier_code}</p>}
-              </div>
+              </div>}
 
-              <div className="space-y-2">
+              {visible('bank_branch') && <div className="space-y-2">
                 <Label htmlFor="bank_branch" required>{t('Bank Branch')}</Label>
                 <Input
                   id="bank_branch"
@@ -862,9 +866,9 @@ export default function ConvertToEmployee() {
                   className={errors.bank_branch ? 'border-red-500' : ''}
                 />
                 {errors.bank_branch && <p className="text-red-500 text-xs">{errors.bank_branch}</p>}
-              </div>
+              </div>}
 
-              <div className="space-y-2">
+              {visible('tax_payer_id') && <div className="space-y-2">
                 <Label htmlFor="tax_payer_id">{t('Tax Payer ID')}</Label>
                 <Input
                   id="tax_payer_id"
@@ -872,9 +876,9 @@ export default function ConvertToEmployee() {
                   onChange={(e) => handleChange('tax_payer_id', e.target.value)}
                   placeholder={t('e.g. 123-45-6789')}
                 />
-              </div>
+              </div>}
 
-              <div className="space-y-2">
+              {visible('salary') && <div className="space-y-2">
                 <Label htmlFor="salary" required>{t('Salary')} </Label>
                 <Input
                   id="salary"
@@ -888,12 +892,12 @@ export default function ConvertToEmployee() {
                   className={errors.salary ? 'border-red-500' : ''}
                 />
                 {errors.salary && <p className="text-red-500 text-xs">{errors.salary}</p>}
-              </div>
+              </div>}
             </div>
           </CardContent>
         </Card>}
 
-        {currentStep === 4 && <Card>
+        {currentStep === 4 && visible('documents') && <Card>
           <CardHeader className='pb-2 border-b border-gray-300'>
             <CardTitle>{t('Documents')}</CardTitle>
           </CardHeader>
@@ -991,13 +995,13 @@ export default function ConvertToEmployee() {
         {/* Navigation Buttons */}
         <div className="flex justify-between">
           {currentStep !== 0 ? (
-            <Button type="button" variant="outline" onClick={() => setCurrentStep(s => s - 1)}>
+            <Button type="button" variant="outline" onClick={() => setCurrentStep(s => previousStep(s))}>
               <ArrowLeft className="h-4 w-4 mr-2" />
               {t('Back')}
             </Button>
           ) : <div />}
-          {currentStep < STEPS.length - 1 ? (
-            <Button type="button" onClick={() => { if (validateStep(currentStep)) setCurrentStep(s => s + 1); }}>
+          {currentStep < lastStep ? (
+            <Button type="button" onClick={() => { if (validateStep(currentStep)) setCurrentStep(s => nextStep(s)); }}>
               {t('Next')}<ArrowRight className="h-4 w-4 ml-2" />
             </Button>
           ) : (
