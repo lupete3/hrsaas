@@ -41,6 +41,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 Route::middleware(['auth', 'verified', 'plan.access'])->group(function () {
     Route::get('settings/modules', [\App\Http\Controllers\Settings\ModuleVisibilityController::class, 'index'])->name('settings.modules.index');
     Route::put('settings/modules', [\App\Http\Controllers\Settings\ModuleVisibilityController::class, 'update'])->name('settings.modules.update');
+    Route::get('settings/employee-fields', [\App\Http\Controllers\Settings\EmployeeFieldsController::class, 'index'])->name('settings.employee-fields.index');
+    Route::put('settings/employee-fields', [\App\Http\Controllers\Settings\EmployeeFieldsController::class, 'update'])->name('settings.employee-fields.update');
     // Payment Settings (admin only)
     Route::post('/payment-settings', [PaymentSettingController::class, 'store'])->name('payment.settings');
 
